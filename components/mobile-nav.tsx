@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Coffee, Home, Award, Gift, ImageIcon, Menu } from "lucide-react"
+import { Coffee, Home, Award, Gift, ImageIcon, Menu, ShoppingBag, Sparkles, Flame } from "lucide-react"
 
 const navItems = [
   {
@@ -20,12 +20,27 @@ const navItems = [
     icon: Gift,
   },
   {
+    title: "Shop",
+    href: "/shop",
+    icon: ShoppingBag,
+  },
+  {
+    title: "Rewards",
+    href: "/rewards",
+    icon: Sparkles,
+  },
+  {
+    title: "Burn",
+    href: "/burn",
+    icon: Flame,
+  },
+  {
     title: "Leaderboard",
     href: "/leaderboard",
     icon: Award,
   },
   {
-    title: "Barista",
+    title: "BearishAF Barista",
     href: "/barista",
     icon: Coffee,
   },
@@ -48,7 +63,7 @@ export function MobileNav() {
           <span className="sr-only">Toggle menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="pr-0">
+      <SheetContent side="left" className="w-[75%] max-w-[280px] pr-0 bg-background">
         <div className="px-2 py-6">
           <div className="flex items-center gap-2 px-4 pb-6 font-bold">
             <span className="text-primary">GRIND</span>

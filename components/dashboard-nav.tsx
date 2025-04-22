@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Coffee, Home, Award, Gift, ImageIcon } from "lucide-react"
+import { Coffee, Home, Award, Gift, ImageIcon, ShoppingBag, Sparkles, Flame } from "lucide-react"
 
 const navItems = [
   {
@@ -18,12 +18,27 @@ const navItems = [
     icon: Gift,
   },
   {
+    title: "Shop",
+    href: "/shop",
+    icon: ShoppingBag,
+  },
+  {
+    title: "Rewards",
+    href: "/rewards",
+    icon: Sparkles,
+  },
+  {
+    title: "Burn",
+    href: "/burn",
+    icon: Flame,
+  },
+  {
     title: "Leaderboard",
     href: "/leaderboard",
     icon: Award,
   },
   {
-    title: "Barista",
+    title: "BearishAF Barista",
     href: "/barista",
     icon: Coffee,
   },
@@ -43,7 +58,10 @@ export function DashboardNav() {
         <Button
           key={item.href}
           variant={pathname === item.href ? "secondary" : "ghost"}
-          className={cn("justify-start", pathname === item.href && "bg-muted/50")}
+          className={cn(
+            "justify-start font-medium",
+            pathname === item.href ? "bg-primary/10 text-primary" : "hover:bg-primary/5 hover:text-primary",
+          )}
           asChild
         >
           <Link href={item.href}>
@@ -52,6 +70,7 @@ export function DashboardNav() {
           </Link>
         </Button>
       ))}
+      <div className="rainbow-divider mt-2"></div>
     </nav>
   )
 }

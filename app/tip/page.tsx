@@ -1,27 +1,75 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Coffee, CreditCard, DollarSign } from "lucide-react"
+import { Coffee, CreditCard, DollarSign, AlertCircle, Check, Flame } from "lucide-react"
+import { useAccount } from "wagmi"
+import { useTokenBalance } from "@/hooks/use-token-balance"
+import { useWriteContract } from "wagmi"
+import { parseUnits } from "viem"
+import { GRIND_TOKEN_ADDRESS, ERC20_ABI, FARMER_ADDRESSES } from "@/lib/contracts"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Checkbox } from "@/components/ui/checkbox"
+
+// Mock farmer data with images
+const farmers = [
+  {
+    name: "Maria – Honduras",
+    address: "0x1234567890123456789012345678901234567890",
+    emoji: "🇭🇳",
+  },
+  {
+    name: "Pablo – Peru",
+    address: "0x2345678901234567890123456789012345678901",
+    emoji: "🇵🇪",
+  },
+  {
+    name: "Kofi – Ghana",
+    address: "0x3456789012345678901234567890123456789012",
+    emoji: "🇬🇭",
+  },
+]
+
+// Burn address
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD"
 
 export default function TipPage() {
   const { toast } = useToast()
+  const { address, isConnected } = useAccount()
+  const { balance } = useTokenBalance(address)
 
   // Crypto tipping state
   const [farmer, setFarmer] = useState("")
   const [amount, setAmount] = useState("")
   const [currency, setCurrency] = useState("GRIND")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedFarmerEmoji, setSelectedFarmerEmoji] = useState("")
+  const [burnTokens, setBurnTokens] = useState(false)
 
   // Stripe tipping state
   const [stripeFarmer, setStripeFarmer] = useState("")
   const [stripeAmount, setStripeAmount] = useState("")
   const [isStripeSubmitting, setIsStripeSubmitting] = useState(false)
+
+  // Setup contract write for token transfers
+  const { writeContractAsync, isPending } = useWriteContract()
+
+  // Update emoji when farmer changes
+  useEffect(() => {
+    if (farmer) {
+      const selectedFarmer = farmers.find((f) => f.name === farmer)
+      if (selectedFarmer) {
+        setSelectedFarmerEmoji(selectedFarmer.emoji)
+      }
+    } else {
+      setSelectedFarmerEmoji("")
+    }
+  }, [farmer])
 
   const handleSendTip = async () => {
     // Validate form
@@ -34,41 +82,82 @@ export default function TipPage() {
       return
     }
 
+    if (!isConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to send tips",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
-      // Simulate processing delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       if (currency === "GRIND") {
-        // TODO: Implement smart contract integration for $GRIND tips
-        // This would include:
-        // 1. Connect to wallet
-        // 2. Create transaction to send $GRIND tokens
-        // 3. Wait for transaction confirmation
-        console.log("Sending $GRIND tip to", farmer, "amount:", amount)
+        // Determine recipient address (farmer or burn address)
+        const recipientAddress = burnTokens ? BURN_ADDRESS : FARMER_ADDRESSES[farmer as keyof typeof FARMER_ADDRESSES]
+
+        // Check if user has enough balance
+        if (Number.parseFloat(balance) < Number.parseFloat(amount)) {
+          throw new Error("Insufficient $GRIND balance")
+        }
+
+        // Send the transaction
+        const hash = await writeContractAsync({
+          address: GRIND_TOKEN_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [recipientAddress, parseUnits(amount, 18)],
+        })
+
+        // Show success toast
+        toast({
+          title: burnTokens ? "Tokens Burned Successfully! 🔥" : "Tip sent successfully! ✨",
+          description: (
+            <div className="flex items-center gap-2">
+              {burnTokens ? (
+                <Flame className="h-4 w-4 text-rainbow-red" />
+              ) : (
+                <Check className="h-4 w-4 text-rainbow-green" />
+              )}
+              <span>
+                You {burnTokens ? "burned" : "tipped"} {amount} $GRIND {!burnTokens && `to ${farmer}`}
+              </span>
+            </div>
+          ),
+          variant: "default",
+        })
       } else {
         // TODO: Implement Stripe integration for USD tips
-        // This would include:
-        // 1. Create Stripe payment intent
-        // 2. Redirect to Stripe checkout or show Stripe Elements
-        // 3. Handle payment success/failure
         console.log("Sending USD tip to", farmer, "amount:", amount)
-      }
 
-      // Show success toast
-      toast({
-        title: "Tip sent!",
-        description: `You tipped ${amount} ${currency} to ${farmer}`,
-      })
+        // Simulate success for demo
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        toast({
+          title: "Tip sent successfully! ✨",
+          description: (
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-rainbow-green" />
+              <span>
+                You tipped ${amount} USD to {farmer}
+              </span>
+            </div>
+          ),
+          variant: "default",
+        })
+      }
 
       // Reset form
       setFarmer("")
       setAmount("")
+      setBurnTokens(false)
     } catch (error) {
+      console.error("Error sending tip:", error)
       toast({
         title: "Error sending tip",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       })
     } finally {
@@ -114,6 +203,7 @@ export default function TipPage() {
       toast({
         title: "Redirecting to Stripe Checkout…",
         description: `Processing $${stripeAmount} payment for ${stripeFarmer}`,
+        variant: "default",
       })
 
       console.log("Redirecting to Stripe for", stripeFarmer, "amount:", stripeAmount)
@@ -134,57 +224,98 @@ export default function TipPage() {
     }
   }
 
+  // Check if form is valid
+  const isTipFormValid = farmer !== "" && amount !== ""
+
   return (
     <div className="container mx-auto max-w-md px-4 py-6 space-y-6">
+      {!isConnected && (
+        <Alert className="bg-rainbow-blue/10 text-rainbow-blue border-rainbow-blue/20">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connect your wallet</AlertTitle>
+          <AlertDescription>
+            Connect your wallet to send tips with $GRIND tokens. Your connection will persist across all pages until you
+            sign out.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {isConnected && (
+        <Alert className="bg-primary/10 text-primary border-primary/20">
+          <Coffee className="h-4 w-4" />
+          <AlertTitle>Your $GRIND Balance</AlertTitle>
+          <AlertDescription>You have {balance} $GRIND tokens available to tip farmers.</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="rainbow-divider"></div>
+
       {/* Crypto Tipping Card */}
-      <Card className="border-muted/30 bg-background/95 backdrop-blur">
+      <Card className="mc-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
+          <CardTitle className="flex items-center gap-2 text-2xl font-heading">
             <Coffee className="h-5 w-5 text-primary" />
             Tip with Crypto
           </CardTitle>
-          <CardDescription>Support farmers with $GRIND or USD crypto</CardDescription>
+          <CardDescription className="text-muted-foreground">Support farmers with $GRIND or USD crypto</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* Farmer Selection */}
           <div className="space-y-2">
             <Label htmlFor="farmer">Select a Farmer</Label>
-            <Select value={farmer} onValueChange={setFarmer}>
+            <Select value={farmer} onValueChange={setFarmer} disabled={burnTokens}>
               <SelectTrigger id="farmer" className="w-full">
                 <SelectValue placeholder="Choose a farmer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Maria – Honduras">Maria – Honduras</SelectItem>
-                <SelectItem value="Pablo – Peru">Pablo – Peru</SelectItem>
-                <SelectItem value="Kofi – Ghana">Kofi – Ghana</SelectItem>
+                {farmers.map((f) => (
+                  <SelectItem key={f.name} value={f.name}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{f.emoji}</span>
+                      <span>{f.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+            {selectedFarmerEmoji && !burnTokens && (
+              <div className="mt-2 p-2 bg-muted/20 rounded-md flex items-center justify-center">
+                <span className="text-4xl">{selectedFarmerEmoji}</span>
+              </div>
+            )}
           </div>
 
           {/* Amount Selection */}
           <div className="space-y-2">
-            <Label>Select Amount</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {["0.5", "1", "2"].map((value) => (
-                <Button
-                  key={value}
-                  type="button"
-                  variant={amount === value ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => setAmount(value)}
-                >
-                  {value}
-                </Button>
-              ))}
+            <Label htmlFor="amount">Enter Amount</Label>
+            <div className="relative">
+              <input
+                id="amount"
+                type="number"
+                min="0.1"
+                step="0.1"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                {currency === "GRIND" ? (
+                  <Coffee className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
             </div>
+            <p className="text-xs text-muted-foreground">Enter any amount you'd like to tip</p>
           </div>
 
           {/* Currency Selection */}
           <div className="space-y-2">
             <Label>Select Currency</Label>
             <RadioGroup value={currency} onValueChange={setCurrency} className="flex">
-              <div className="flex items-center space-x-2 rounded-md border border-muted/30 p-3 flex-1">
+              <div className="flex items-center space-x-2 rounded-md border border-primary/30 bg-primary/5 p-3 flex-1">
                 <RadioGroupItem value="GRIND" id="grind" />
                 <Label htmlFor="grind" className="flex items-center gap-1 cursor-pointer">
                   <Coffee className="h-4 w-4" />
@@ -200,23 +331,54 @@ export default function TipPage() {
               </div>
             </RadioGroup>
           </div>
+
+          {/* Burn Option (only for GRIND) */}
+          {currency === "GRIND" && (
+            <div className="flex items-start space-x-2 rounded-md border border-rainbow-red/30 bg-rainbow-red/5 p-3">
+              <Checkbox
+                id="burn-tokens"
+                checked={burnTokens}
+                onCheckedChange={(checked) => {
+                  setBurnTokens(checked === true)
+                  if (checked) setFarmer("")
+                }}
+                className="data-[state=checked]:bg-rainbow-red data-[state=checked]:border-rainbow-red"
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="burn-tokens"
+                  className="flex items-center gap-2 cursor-pointer text-rainbow-red font-medium"
+                >
+                  <Flame className="h-4 w-4" />
+                  Burn $GRIND instead
+                </Label>
+                <p className="text-xs text-muted-foreground">Burning tokens reduces supply and increases scarcity</p>
+              </div>
+            </div>
+          )}
         </CardContent>
 
         <CardFooter>
-          <Button onClick={handleSendTip} className="w-full" disabled={isSubmitting || !farmer || !amount}>
-            {isSubmitting ? "Processing..." : "Send Tip"}
+          <Button
+            onClick={handleSendTip}
+            className={`w-full mc-button-primary ${burnTokens ? "bg-rainbow-red hover:bg-rainbow-red/90" : ""}`}
+            disabled={
+              isSubmitting || (!isTipFormValid && !burnTokens) || (!amount && burnTokens) || !isConnected || isPending
+            }
+          >
+            {isSubmitting || isPending ? "Processing..." : burnTokens ? "Burn Tokens 🔥" : "Send Tip"}
           </Button>
         </CardFooter>
       </Card>
 
       {/* Stripe Tipping Card */}
-      <Card className="border-muted/30 bg-background/95 backdrop-blur">
+      <Card className="mc-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
+          <CardTitle className="flex items-center gap-2 text-2xl font-heading">
             <CreditCard className="h-5 w-5 text-primary" />
             Tip with Fiat (via Stripe)
           </CardTitle>
-          <CardDescription>Support farmers with credit or debit card</CardDescription>
+          <CardDescription className="text-muted-foreground">Support farmers with credit or debit card</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -228,9 +390,14 @@ export default function TipPage() {
                 <SelectValue placeholder="Choose a farmer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Maria – Honduras">Maria – Honduras</SelectItem>
-                <SelectItem value="Pablo – Peru">Pablo – Peru</SelectItem>
-                <SelectItem value="Kofi – Ghana">Kofi – Ghana</SelectItem>
+                {farmers.map((f) => (
+                  <SelectItem key={f.name} value={f.name}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{f.emoji}</span>
+                      <span>{f.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -254,7 +421,7 @@ export default function TipPage() {
         <CardFooter>
           <Button
             onClick={handleStripePayment}
-            className="w-full"
+            className="w-full mc-button-outline"
             variant="outline"
             disabled={isStripeSubmitting || !stripeFarmer || !stripeAmount}
           >

@@ -3,7 +3,7 @@
 import { AbstractWalletProvider } from "@abstract-foundation/agw-react"
 import { WagmiConfig, createConfig } from "wagmi"
 import { http } from "wagmi"
-import type { ReactNode } from "react"
+import { type ReactNode, useEffect } from "react"
 
 const abstractTestnet = {
   id: 11124,
@@ -20,18 +20,63 @@ const abstractTestnet = {
   },
 }
 
-// Set up wagmi config with direct HTTP provider
+// Set up wagmi config with direct HTTP provider and persistent storage
 const config = createConfig({
   chains: [abstractTestnet],
   transports: {
     [abstractTestnet.id]: http("https://api.testnet.abs.xyz"),
   },
+  // Enable persistent storage for wallet connections
+  // This ensures the connection persists across page refreshes
+  storage: {
+    getItem: (key) => {
+      try {
+        const value = localStorage.getItem(key)
+        return value === null ? null : JSON.parse(value)
+      } catch (error) {
+        console.error("Error retrieving from localStorage:", error)
+        return null
+      }
+    },
+    setItem: (key, value) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value))
+      } catch (error) {
+        console.error("Error storing in localStorage:", error)
+      }
+    },
+    removeItem: (key) => {
+      try {
+        localStorage.removeItem(key)
+      } catch (error) {
+        console.error("Error removing from localStorage:", error)
+      }
+    },
+  },
 })
 
 export function AGWProvider({ children }: { children: ReactNode }) {
+  // Attempt to reconnect on page load if previously connected
+  useEffect(() => {
+    // Check if there's a stored connection
+    const storedConnection = localStorage.getItem("agw-connection")
+    if (storedConnection) {
+      // The Abstract wallet will automatically attempt to reconnect
+      console.log("Attempting to reconnect to previously connected wallet")
+    }
+  }, [])
+
   return (
     <WagmiConfig config={config}>
-      <AbstractWalletProvider chain={abstractTestnet}>{children}</AbstractWalletProvider>
+      <AbstractWalletProvider
+        chain={abstractTestnet}
+        // Set persistent session to true
+        persistSession={true}
+        // Auto-connect if previously connected
+        autoConnect={true}
+      >
+        {children}
+      </AbstractWalletProvider>
     </WagmiConfig>
   )
 }

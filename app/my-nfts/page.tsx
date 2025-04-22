@@ -45,9 +45,9 @@ const mockNFTs = [
 
 // Rarity color mapping
 const rarityColors = {
-  Common: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-  Rare: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  Legendary: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  Common: "bg-muted/10 text-muted-foreground border-muted/20",
+  Rare: "bg-rainbow-blue/10 text-rainbow-blue border-rainbow-blue/20",
+  Legendary: "bg-primary/10 text-primary border-primary/20",
 }
 
 export default function MyNFTsPage() {
@@ -109,10 +109,10 @@ export default function MyNFTsPage() {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="mb-4 text-3xl font-bold tracking-tight">Your Roast Rewards</h1>
+        <h1 className="mb-4 text-3xl font-bold tracking-tight font-heading">Your Roast Rewards</h1>
 
         {/* Wallet Section */}
-        <div className="mb-6 flex flex-col items-start justify-between gap-4 rounded-lg border border-muted/30 bg-background/80 p-4 backdrop-blur sm:flex-row sm:items-center">
+        <div className="mb-6 flex flex-col items-start justify-between gap-4 rounded-lg border border-muted/30 bg-background/80 p-4 backdrop-blur sm:flex-row sm:items-center shadow-card">
           {isConnected ? (
             <div className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-primary" />
@@ -129,16 +129,15 @@ export default function MyNFTsPage() {
           {!isConnected && <ConnectWalletButton />}
         </div>
 
+        <div className="rainbow-divider"></div>
+
         {/* NFT Grid */}
         {isConnected && (
           <>
             {nfts.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {nfts.map((nft) => (
-                  <Card
-                    key={nft.id}
-                    className="group overflow-hidden border-muted/30 bg-background/95 backdrop-blur transition-all hover:shadow-md hover:shadow-primary/10"
-                  >
+                  <Card key={nft.id} className="group overflow-hidden mc-card">
                     <div className="relative aspect-square overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -156,7 +155,7 @@ export default function MyNFTsPage() {
                       </Badge>
                     </div>
                     <CardHeader className="p-3 pb-0">
-                      <h3 className="font-bold">{nft.name}</h3>
+                      <h3 className="font-bold font-heading">{nft.name}</h3>
                     </CardHeader>
                     <CardContent className="p-3 pt-1">
                       <p className="text-sm text-muted-foreground">Origin: {nft.origin}</p>
@@ -167,14 +166,14 @@ export default function MyNFTsPage() {
             ) : (
               <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted/50 bg-muted/5 p-12 text-center">
                 <Coffee className="mb-2 h-10 w-10 text-muted-foreground/50" />
-                <h3 className="mb-1 text-xl font-medium">No Roasts Found</h3>
+                <h3 className="mb-1 text-xl font-medium font-heading">No Roasts Found</h3>
                 <p className="mb-4 text-muted-foreground">You haven't collected any roasts yet!</p>
               </div>
             )}
 
             {/* Mint Button */}
             <div className="mt-6 flex justify-center">
-              <Button onClick={handleMint} disabled={isMinting} className="gap-2">
+              <Button onClick={handleMint} disabled={isMinting} className="gap-2 mc-button-primary">
                 <Plus className="h-4 w-4" />
                 {isMinting ? "Minting..." : "Mint Reward NFT"}
               </Button>

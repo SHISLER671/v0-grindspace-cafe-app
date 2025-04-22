@@ -26,11 +26,11 @@ const topTippers = [
 const getRankBadge = (index: number) => {
   switch (index) {
     case 0:
-      return { emoji: "🥇", color: "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20" }
+      return { emoji: "🥇", color: "bg-primary/10 text-primary hover:bg-primary/20" }
     case 1:
-      return { emoji: "🥈", color: "bg-slate-400/10 text-slate-400 hover:bg-slate-400/20" }
+      return { emoji: "🥈", color: "bg-muted/10 text-muted-foreground hover:bg-muted/20" }
     case 2:
-      return { emoji: "🥉", color: "bg-amber-700/10 text-amber-700 hover:bg-amber-700/20" }
+      return { emoji: "🥉", color: "bg-rainbow-yellow/10 text-rainbow-yellow hover:bg-rainbow-yellow/20" }
     default:
       return { emoji: `${index + 1}`, color: "bg-muted/20 text-muted-foreground hover:bg-muted/30" }
   }
@@ -41,18 +41,22 @@ export default function LeaderboardPage() {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6 flex items-center gap-2">
         <Trophy className="h-6 w-6 text-primary" />
-        <h1 className="text-3xl font-bold tracking-tight">Leaderboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-heading">Leaderboard</h1>
       </div>
+
+      <div className="rainbow-divider"></div>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Top Referrers Card */}
-        <Card className="border-muted/30 bg-background/95 backdrop-blur transition-all hover:shadow-md hover:shadow-primary/5">
+        <Card className="mc-card">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              <CardTitle>Top Referrers</CardTitle>
+              <CardTitle className="font-heading">Top Referrers</CardTitle>
             </div>
-            <CardDescription>Users who have referred the most friends</CardDescription>
+            <CardDescription className="text-muted-foreground">
+              Users who have referred the most friends
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
@@ -78,13 +82,13 @@ export default function LeaderboardPage() {
         </Card>
 
         {/* Top Tippers Card */}
-        <Card className="border-muted/30 bg-background/95 backdrop-blur transition-all hover:shadow-md hover:shadow-primary/5">
+        <Card className="mc-card">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Coffee className="h-5 w-5 text-primary" />
-              <CardTitle>Top Tippers</CardTitle>
+              <CardTitle className="font-heading">Top Tippers</CardTitle>
             </div>
-            <CardDescription>Users who have tipped the most farmers</CardDescription>
+            <CardDescription className="text-muted-foreground">Users who have tipped the most farmers</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
