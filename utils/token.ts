@@ -1,5 +1,4 @@
 import type { useToast } from "@/hooks/use-toast"
-import { Flame, CoffeeIcon } from "lucide-react"
 
 // Burn address
 export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD"
@@ -53,27 +52,17 @@ export async function burnTokens({
       await burnFunction(amount)
     }
 
-    // Show success toast based on purpose
+    // Show success toast based on purpose - using plain strings instead of JSX
     if (purpose === "reading") {
       toast({
         title: "Reading Initiated! ✨",
-        description: (
-          <div className="flex items-center gap-2">
-            <CoffeeIcon className="h-4 w-4 text-primary" />
-            <span>You spent {amount} $GRIND tokens for a mystical reading</span>
-          </div>
-        ),
+        description: `You spent ${amount} $GRIND tokens for a mystical reading`,
         variant: "default",
       })
     } else {
       toast({
         title: "Tokens Burned Successfully! 🔥",
-        description: (
-          <div className="flex items-center gap-2">
-            <Flame className="h-4 w-4 text-rainbow-red" />
-            <span>You burned {amount} $GRIND tokens</span>
-          </div>
-        ),
+        description: `You burned ${amount} $GRIND tokens`,
         variant: "default",
       })
     }
