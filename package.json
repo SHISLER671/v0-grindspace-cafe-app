@@ -67,9 +67,9 @@
     "wagmi": "latest",
     "@emotion/is-prop-valid": "latest",
     "@abstract-foundation/agw-react": "latest",
-    "framer-motion": "latest",
     "ai": "latest",
-    "@ai-sdk/openai": "latest"
+    "@ai-sdk/openai": "latest",
+    "framer-motion": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

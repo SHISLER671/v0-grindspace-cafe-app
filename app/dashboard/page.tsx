@@ -5,20 +5,23 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Coffee, Copy, Gift, Users, Wallet, ExternalLink } from "lucide-react"
+import { Coffee, Gift, Users, Wallet, ExternalLink } from "lucide-react"
 import { useAccount } from "wagmi"
 import { useTokenBalance } from "@/hooks/use-token-balance"
 import { useWriteContract } from "wagmi"
 import { parseUnits } from "viem"
 import { GRIND_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/contracts"
+import { ReferralShareCard } from "@/components/referral-share-card"
+import { ReferralBadge } from "@/components/referral-badge"
+import { useReferral } from "@/hooks/use-referral"
 
 export default function Dashboard() {
   const router = useRouter()
   const { toast } = useToast()
-  const [isCopying, setIsCopying] = useState(false)
   const { address, isConnected } = useAccount()
   const { balance } = useTokenBalance(address)
   const [isReferralClaiming, setIsReferralClaiming] = useState(false)
+  const { rewardReferrer, referralEarnings } = useReferral(address)
 
   // Setup contract write for token transfers
   const { writeContractAsync } = useWriteContract()
@@ -35,8 +38,8 @@ export default function Dashboard() {
       color: "text-primary",
     },
     {
-      title: "Referred Users",
-      value: "7",
+      title: "Referral Earnings",
+      value: isConnected ? referralEarnings.toString() : "0",
       icon: Users,
       color: "text-rainbow-blue",
     },
@@ -47,27 +50,6 @@ export default function Dashboard() {
       color: "text-rainbow-yellow",
     },
   ]
-
-  const copyReferralLink = async () => {
-    const referralLink = `https://makingcoffee.com/?ref=${address || walletAddress}`
-
-    try {
-      setIsCopying(true)
-      await navigator.clipboard.writeText(referralLink)
-      toast({
-        title: "Success!",
-        description: "Referral link copied!",
-      })
-    } catch (err) {
-      toast({
-        title: "Failed to copy",
-        description: "Please try again",
-        variant: "destructive",
-      })
-    } finally {
-      setIsCopying(false)
-    }
-  }
 
   // Simulate claiming rewards for a referral
   const claimReferralReward = async () => {
@@ -83,17 +65,20 @@ export default function Dashboard() {
     setIsReferralClaiming(true)
 
     try {
-      // In a real app, this would verify the referral on the backend
-      // For demo purposes, we'll simulate minting tokens to the user
+      // First, try to process any pending referral reward
+      const referralProcessed = rewardReferrer()
 
-      // This is a mock implementation - in production, this would be a server-side
-      // verification followed by a token transfer from a treasury wallet
-      const hash = await writeContractAsync({
-        address: GRIND_TOKEN_ADDRESS,
-        abi: ERC20_ABI,
-        functionName: "transfer",
-        args: [address, parseUnits("10", 18)],
-      })
+      // If no referral was processed, or in addition to it, claim the regular reward
+      if (!referralProcessed) {
+        // This is a mock implementation - in production, this would be a server-side
+        // verification followed by a token transfer from a treasury wallet
+        const hash = await writeContractAsync({
+          address: GRIND_TOKEN_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "transfer",
+          args: [address, parseUnits("10", 18)],
+        })
+      }
 
       toast({
         title: "Rewards Claimed!",
@@ -113,9 +98,20 @@ export default function Dashboard() {
 
   return (
     <div className="grid gap-6">
-      <h1 className="text-3xl font-bold tracking-tight font-heading">Referral Dashboard</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight font-heading">Referral Dashboard</h1>
+        <ReferralBadge />
+      </div>
 
-      <Card className="mc-card">
+      {/* Add the ReferralShareCard here, before the main stats card */}
+      <ReferralShareCard />
+
+      {/* The rest of the dashboard content */}
+      <Card className="mc-card relative overflow-hidden">
+        {/* Add a subtle highlight effect */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
+
+        {/* Rest of the card content */}
         <CardHeader>
           <CardTitle className="font-heading">Your Referral Stats</CardTitle>
           <CardDescription className="text-muted-foreground">
@@ -151,16 +147,7 @@ export default function Dashboard() {
 
           <div className="rainbow-divider"></div>
 
-          {/* Referral Link */}
-          <div className="space-y-2">
-            <Button onClick={copyReferralLink} className="w-full gap-2 mc-button-primary" disabled={isCopying}>
-              <Copy className="h-4 w-4" />
-              Copy Referral Link
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Share your link to earn rewards when friends join
-            </p>
-          </div>
+          {/* Replace the existing referral link section with our new component */}
 
           {/* External Referral Link */}
           <Button asChild className="w-full bg-primary hover:bg-primary/90 text-foreground font-medium shadow-card">

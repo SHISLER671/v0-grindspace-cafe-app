@@ -6,7 +6,19 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Coffee, Home, Award, Gift, ImageIcon, Menu, ShoppingBag, Sparkles, Flame, Shield } from "lucide-react"
+import {
+  Coffee,
+  Home,
+  Award,
+  Gift,
+  ImageIcon,
+  Menu,
+  ShoppingBag,
+  Sparkles,
+  Flame,
+  Shield,
+  CoffeeIcon,
+} from "lucide-react"
 
 const navItems = [
   {
@@ -33,6 +45,11 @@ const navItems = [
     title: "Burn",
     href: "/burn",
     icon: Flame,
+  },
+  {
+    title: "Coffee Reading",
+    href: "/reading",
+    icon: CoffeeIcon,
   },
   {
     title: "Leaderboard",

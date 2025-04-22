@@ -7,14 +7,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Coffee, CreditCard, DollarSign, AlertCircle, Check, Flame } from "lucide-react"
+import { Coffee, CreditCard, DollarSign, AlertCircle, Check } from "lucide-react"
 import { useAccount } from "wagmi"
 import { useTokenBalance } from "@/hooks/use-token-balance"
 import { useWriteContract } from "wagmi"
 import { parseUnits } from "viem"
 import { GRIND_TOKEN_ADDRESS, ERC20_ABI, FARMER_ADDRESSES } from "@/lib/contracts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useReferral } from "@/hooks/use-referral"
 
 // Mock farmer data with images
 const farmers = [
@@ -35,13 +35,11 @@ const farmers = [
   },
 ]
 
-// Burn address
-const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD"
-
 export default function TipPage() {
   const { toast } = useToast()
   const { address, isConnected } = useAccount()
   const { balance } = useTokenBalance(address)
+  const { rewardReferrer } = useReferral(address)
 
   // Crypto tipping state
   const [farmer, setFarmer] = useState("")
@@ -49,7 +47,6 @@ export default function TipPage() {
   const [currency, setCurrency] = useState("GRIND")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedFarmerEmoji, setSelectedFarmerEmoji] = useState("")
-  const [burnTokens, setBurnTokens] = useState(false)
 
   // Stripe tipping state
   const [stripeFarmer, setStripeFarmer] = useState("")
@@ -95,8 +92,8 @@ export default function TipPage() {
 
     try {
       if (currency === "GRIND") {
-        // Determine recipient address (farmer or burn address)
-        const recipientAddress = burnTokens ? BURN_ADDRESS : FARMER_ADDRESSES[farmer as keyof typeof FARMER_ADDRESSES]
+        // Determine recipient address (farmer)
+        const recipientAddress = FARMER_ADDRESSES[farmer as keyof typeof FARMER_ADDRESSES]
 
         // Check if user has enough balance
         if (Number.parseFloat(balance) < Number.parseFloat(amount)) {
@@ -111,18 +108,17 @@ export default function TipPage() {
           args: [recipientAddress, parseUnits(amount, 18)],
         })
 
+        // Process any pending referral reward
+        const rewarded = rewardReferrer()
+
         // Show success toast
         toast({
-          title: burnTokens ? "Tokens Burned Successfully! 🔥" : "Tip sent successfully! ✨",
+          title: "Tip sent successfully! ✨",
           description: (
             <div className="flex items-center gap-2">
-              {burnTokens ? (
-                <Flame className="h-4 w-4 text-rainbow-red" />
-              ) : (
-                <Check className="h-4 w-4 text-rainbow-green" />
-              )}
+              <Check className="h-4 w-4 text-rainbow-green" />
               <span>
-                You {burnTokens ? "burned" : "tipped"} {amount} $GRIND {!burnTokens && `to ${farmer}`}
+                You tipped {amount} $GRIND to {farmer}
               </span>
             </div>
           ),
@@ -134,6 +130,9 @@ export default function TipPage() {
 
         // Simulate success for demo
         await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // Process any pending referral reward
+        const rewarded = rewardReferrer()
 
         toast({
           title: "Tip sent successfully! ✨",
@@ -152,7 +151,6 @@ export default function TipPage() {
       // Reset form
       setFarmer("")
       setAmount("")
-      setBurnTokens(false)
     } catch (error) {
       console.error("Error sending tip:", error)
       toast({
@@ -182,22 +180,8 @@ export default function TipPage() {
       // Simulate processing delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // TODO: Implement Stripe Checkout
-      // 1. Create a payment intent on the server
-      // const response = await fetch('/api/create-checkout-session', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     farmer: stripeFarmer,
-      //     amount: stripeAmount,
-      //     currency: 'usd'
-      //   })
-      // });
-      //
-      // 2. Redirect to Stripe Checkout
-      // const { sessionId } = await response.json();
-      // const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-      // stripe.redirectToCheckout({ sessionId });
+      // Process any pending referral reward
+      const rewarded = rewardReferrer()
 
       // Show redirect toast
       toast({
@@ -264,7 +248,7 @@ export default function TipPage() {
           {/* Farmer Selection */}
           <div className="space-y-2">
             <Label htmlFor="farmer">Select a Farmer</Label>
-            <Select value={farmer} onValueChange={setFarmer} disabled={burnTokens}>
+            <Select value={farmer} onValueChange={setFarmer}>
               <SelectTrigger id="farmer" className="w-full">
                 <SelectValue placeholder="Choose a farmer" />
               </SelectTrigger>
@@ -279,7 +263,7 @@ export default function TipPage() {
                 ))}
               </SelectContent>
             </Select>
-            {selectedFarmerEmoji && !burnTokens && (
+            {selectedFarmerEmoji && (
               <div className="mt-2 p-2 bg-muted/20 rounded-md flex items-center justify-center">
                 <span className="text-4xl">{selectedFarmerEmoji}</span>
               </div>
@@ -331,42 +315,15 @@ export default function TipPage() {
               </div>
             </RadioGroup>
           </div>
-
-          {/* Burn Option (only for GRIND) */}
-          {currency === "GRIND" && (
-            <div className="flex items-start space-x-2 rounded-md border border-rainbow-red/30 bg-rainbow-red/5 p-3">
-              <Checkbox
-                id="burn-tokens"
-                checked={burnTokens}
-                onCheckedChange={(checked) => {
-                  setBurnTokens(checked === true)
-                  if (checked) setFarmer("")
-                }}
-                className="data-[state=checked]:bg-rainbow-red data-[state=checked]:border-rainbow-red"
-              />
-              <div className="grid gap-1.5 leading-none">
-                <Label
-                  htmlFor="burn-tokens"
-                  className="flex items-center gap-2 cursor-pointer text-rainbow-red font-medium"
-                >
-                  <Flame className="h-4 w-4" />
-                  Burn $GRIND instead
-                </Label>
-                <p className="text-xs text-muted-foreground">Burning tokens reduces supply and increases scarcity</p>
-              </div>
-            </div>
-          )}
         </CardContent>
 
         <CardFooter>
           <Button
             onClick={handleSendTip}
-            className={`w-full mc-button-primary ${burnTokens ? "bg-rainbow-red hover:bg-rainbow-red/90" : ""}`}
-            disabled={
-              isSubmitting || (!isTipFormValid && !burnTokens) || (!amount && burnTokens) || !isConnected || isPending
-            }
+            className="w-full mc-button-primary"
+            disabled={isSubmitting || !isTipFormValid || !isConnected || isPending}
           >
-            {isSubmitting || isPending ? "Processing..." : burnTokens ? "Burn Tokens 🔥" : "Send Tip"}
+            {isSubmitting || isPending ? "Processing..." : "Send Tip"}
           </Button>
         </CardFooter>
       </Card>

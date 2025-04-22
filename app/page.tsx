@@ -1,3 +1,7 @@
+"use client"
+
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
@@ -6,7 +10,28 @@ import { ConnectWalletButton } from "@/components/connect-wallet-button"
 import { Shield, ExternalLink } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
+import { useAccount } from "wagmi"
+import { ReferralShareCard } from "@/components/referral-share-card"
+
 export default function Home() {
+  const searchParams = useSearchParams()
+  const { isConnected } = useAccount()
+
+  // Store referral parameter if present
+  useEffect(() => {
+    const ref = searchParams?.get("ref")
+    if (ref) {
+      // We'll store this temporarily - the actual validation and storage
+      // happens in the useReferral hook when the user connects their wallet
+      sessionStorage.setItem("temp-referrer", ref)
+
+      // Also store in localStorage for the useReferral hook to pick up
+      if (!localStorage.getItem("grindspace-referrer")) {
+        localStorage.setItem("grindspace-referrer", ref)
+      }
+    }
+  }, [searchParams])
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-background/80 p-4">
       <Card className="w-full max-w-md border-muted/30 bg-background/95 backdrop-blur shadow-card">
@@ -32,6 +57,23 @@ export default function Home() {
             />
           </div>
           <p className="text-center text-muted-foreground">Connect your wallet to enter the digital café experience</p>
+
+          {isConnected && (
+            <div className="container max-w-4xl mx-auto px-4 py-8">
+              <ReferralShareCard />
+            </div>
+          )}
+
+          {/* Referral Badge */}
+          {searchParams?.get("ref") && (
+            <Alert className="bg-rainbow-blue/10 border-rainbow-blue/20 flex items-center gap-2 py-2">
+              <ExternalLink className="h-4 w-4 text-rainbow-blue flex-shrink-0" />
+              <AlertDescription className="text-sm">
+                <span className="font-medium text-rainbow-blue">Referred by:</span>{" "}
+                {`${searchParams.get("ref")?.slice(0, 6)}...${searchParams.get("ref")?.slice(-4)}`}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Wallet Safety Alert */}
           <Alert className="bg-rainbow-green/10 border-rainbow-green/20 flex items-center gap-2 py-2">

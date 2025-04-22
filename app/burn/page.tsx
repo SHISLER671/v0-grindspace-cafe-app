@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { ConnectWalletButton } from "@/components/connect-wallet-button"
 import { motion, AnimatePresence } from "framer-motion"
+import { useReferral } from "@/hooks/use-referral"
+import { simulateBurnTokens } from "@/utils/token"
 
 // Mock leaderboard data
 const initialLeaderboard = [
@@ -38,6 +40,7 @@ export default function BurnPage() {
   const { toast } = useToast()
   const { address, isConnected } = useAccount()
   const { balance, isLoading } = useTokenBalance(address)
+  const { processReferralReward } = useReferral()
 
   const [burnAmount, setBurnAmount] = useState<string>("10")
   const [isBurning, setIsBurning] = useState(false)
@@ -104,58 +107,64 @@ export default function BurnPage() {
     setIsBurning(true)
     setIsFireActive(true)
 
-    // Simulate burning process
-    setTimeout(() => {
-      // Update total burned
-      const newTotal = (Number.parseFloat(totalBurned) + amount).toString()
-      setTotalBurned(newTotal)
-      localStorage.setItem("grindspace-total-burned", newTotal)
+    // Use the simulateBurnTokens utility function
+    simulateBurnTokens({
+      amount: burnAmount,
+      address,
+      toast,
+    })
+      .then(async () => {
+        // Process any pending referral reward
+        await processReferralReward()
 
-      // Update leaderboard
-      if (address) {
-        const formattedAddress = formatAddress(address)
-        const existingEntry = leaderboard.find((entry) => entry.address === formattedAddress)
+        // Update leaderboard
+        if (address) {
+          const formattedAddress = formatAddress(address)
+          const existingEntry = leaderboard.find((entry) => entry.address === formattedAddress)
 
-        let newLeaderboard
-        if (existingEntry) {
-          // Update existing entry
-          newLeaderboard = leaderboard.map((entry) =>
-            entry.address === formattedAddress
-              ? { ...entry, amount: (Number.parseFloat(entry.amount) + amount).toString() }
-              : entry,
-          )
-        } else {
-          // Add new entry
-          newLeaderboard = [...leaderboard, { address: formattedAddress, amount: amount.toString() }]
+          let newLeaderboard
+          if (existingEntry) {
+            // Update existing entry
+            newLeaderboard = leaderboard.map((entry) =>
+              entry.address === formattedAddress
+                ? { ...entry, amount: (Number.parseFloat(entry.amount) + amount).toString() }
+                : entry,
+            )
+          } else {
+            // Add new entry
+            newLeaderboard = [...leaderboard, { address: formattedAddress, amount: amount.toString() }]
+          }
+
+          // Sort leaderboard by amount (descending)
+          newLeaderboard.sort((a, b) => Number.parseFloat(b.amount) - Number.parseFloat(a.amount))
+
+          // Keep only top 5
+          newLeaderboard = newLeaderboard.slice(0, 5)
+
+          setLeaderboard(newLeaderboard)
+          localStorage.setItem("grindspace-burn-leaderboard", JSON.stringify(newLeaderboard))
         }
 
-        // Sort leaderboard by amount (descending)
-        newLeaderboard.sort((a, b) => Number.parseFloat(b.amount) - Number.parseFloat(a.amount))
+        // Set new random quote
+        setQuote(quotes[Math.floor(Math.random() * quotes.length)])
 
-        // Keep only top 5
-        newLeaderboard = newLeaderboard.slice(0, 5)
+        setIsBurning(false)
 
-        setLeaderboard(newLeaderboard)
-        localStorage.setItem("grindspace-burn-leaderboard", JSON.stringify(newLeaderboard))
-      }
-
-      // Show success toast
-      toast({
-        title: "Offering Accepted! 🔥",
-        description: `You sacrificed ${amount} $GRIND to Beanjahmon`,
-        variant: "default",
+        // Turn off fire effect after a delay
+        setTimeout(() => {
+          setIsFireActive(false)
+        }, 3000)
       })
-
-      // Set new random quote
-      setQuote(quotes[Math.floor(Math.random() * quotes.length)])
-
-      setIsBurning(false)
-
-      // Turn off fire effect after a delay
-      setTimeout(() => {
+      .catch((error) => {
+        console.error("Error burning tokens:", error)
+        toast({
+          title: "Error burning tokens",
+          description: "Please try again later",
+          variant: "destructive",
+        })
+        setIsBurning(false)
         setIsFireActive(false)
-      }, 3000)
-    }, 2000)
+      })
   }
 
   // Handle slider change

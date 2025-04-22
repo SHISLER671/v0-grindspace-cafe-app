@@ -13,6 +13,7 @@ import { parseUnits } from "viem"
 import { GRIND_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/contracts"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { motion } from "framer-motion"
+import { useReferral } from "@/hooks/use-referral"
 
 // Mock shop items
 const shopItems = [
@@ -52,6 +53,7 @@ export default function ShopPage() {
   const { balance } = useTokenBalance(address)
   const [isPurchasing, setIsPurchasing] = useState<string | null>(null)
   const [purchasedItems, setPurchasedItems] = useState<string[]>([])
+  const { rewardReferrer } = useReferral(address)
 
   // Setup contract write for token transfers
   const { writeContractAsync } = useWriteContract()
@@ -89,6 +91,9 @@ export default function ShopPage() {
         functionName: "transfer",
         args: [treasuryAddress, parseUnits(item.price, 18)],
       })
+
+      // Process any pending referral reward
+      const rewarded = rewardReferrer()
 
       // In a real app, we would now call a backend API to record the purchase
       // and deliver the digital good or physical product
