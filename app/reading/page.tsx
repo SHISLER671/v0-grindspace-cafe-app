@@ -395,7 +395,7 @@ export default function ReadingPage() {
             <Card className="bg-[#0E1A26] border-muted/30">
               <CardContent className="p-4">
                 <p className="italic text-sm mb-2 text-[#FDF2D0]">
-                  "I was skeptical, but the reading warned me about a 'false opportunity.' Saved me from a rug pull!"
+                  "I was skeptical, but the reading warned me about a false opportunity. Saved me from a rug pull!"
                 </p>
                 <p className="text-xs text-muted-foreground">— 0xcafe...babe</p>
               </CardContent>
@@ -403,7 +403,7 @@ export default function ReadingPage() {
             <Card className="bg-[#0E1A26] border-muted/30">
               <CardContent className="p-4">
                 <p className="italic text-sm mb-2 text-[#FDF2D0]">
-                  "The beans don't lie. My reading predicted 'unexpected wealth' and I found 0.5 ETH in an old wallet!"
+                  "The beans don't lie. My reading predicted unexpected wealth and I found 0.5 ETH in an old wallet!"
                 </p>
                 <p className="text-xs text-muted-foreground">— 0xf00d...cafe</p>
               </CardContent>
