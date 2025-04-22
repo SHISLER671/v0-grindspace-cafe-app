@@ -204,38 +204,35 @@ export default function BaristaPage() {
       <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         <div className="mx-auto max-w-4xl space-y-6 pb-20">
           {/* Welcome Message */}
-          {messages.length === 0 && (
-            <div className="flex items-start gap-3">
-              <Avatar className="mt-1 h-8 w-8 rounded-md border border-primary/50">
-                <AvatarImage src="/beanjahmon-avatar.png" alt="Beanjahmon" className="object-cover" />
-                <AvatarFallback className="bg-secondary text-primary">BJ</AvatarFallback>
-              </Avatar>
-              <div className="rounded-lg rounded-tl-none bg-secondary p-4 text-sm shadow-lg">
-                <p>
-                  *adjusts cap* Hey there, cosmic traveler. Welcome to my little corner of the grind. What's on your
-                  mind today? Coffee questions? Life advice? I'm all ears and beans, man.
-                  {isConnected && balance && (
-                    <span className="block mt-2 text-primary">
-                      I see you're holdin' {balance} $GRIND tokens. Nice stash, friend. That's some serious coffee
-                      karma.
-                    </span>
-                  )}
-                  <span className="block mt-2">
-                    Wanna see where the grind begins? Check out{" "}
-                    <a
-                      href="https://v0-grindogatchi-app-setup-27ya6riam.vercel.app"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline hover:text-primary/80"
-                    >
-                      GRINDOGATCHI
-                    </a>{" "}
-                    — our caffeine-fueled pet sim. Raise your own little coffee bean!
-                  </span>
+          <div className="flex items-start gap-3">
+            <Avatar className="mt-1 h-8 w-8 rounded-md border border-primary/50">
+              <AvatarImage src="/beanjahmon-avatar.png" alt="Beanjahmon" className="object-cover" />
+              <AvatarFallback className="bg-secondary text-primary">BJ</AvatarFallback>
+            </Avatar>
+            <div className="rounded-lg rounded-tl-none bg-secondary p-4 text-sm shadow-lg">
+              <p>
+                *adjusts cap* Hey there, cosmic traveler. Welcome to my little corner of the grind. What's on your mind
+                today? Coffee questions? Life advice? I'm all ears and beans, man.
+              </p>
+              {isConnected && balance && (
+                <p className="mt-2 text-primary">
+                  I see you're holdin' {balance} $GRIND tokens. Nice stash, friend. That's some serious coffee karma.
                 </p>
-              </div>
+              )}
+              <p className="mt-2">
+                Wanna see where the grind begins? Check out{" "}
+                <a
+                  href="https://v0-grindogatchi-app-setup-27ya6riam.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  GRINDOGATCHI
+                </a>{" "}
+                — our caffeine-fueled pet sim. Raise your own little coffee bean!
+              </p>
             </div>
-          )}
+          </div>
 
           {/* Message History */}
           {messages.map((message, index) => (
