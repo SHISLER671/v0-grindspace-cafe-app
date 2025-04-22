@@ -211,12 +211,13 @@ export default function BaristaPage() {
             </Avatar>
             <div className="rounded-lg rounded-tl-none bg-secondary p-4 text-sm shadow-lg">
               <p>
-                *adjusts cap* Hey there, cosmic traveler. Welcome to my little corner of the grind. What's on your mind
-                today? Coffee questions? Life advice? I'm all ears and beans, man.
+                *adjusts cap* Hey there, cosmic traveler. Welcome to my little corner of the grind. What&apos;s on your
+                mind today? Coffee questions? Life advice? I&apos;m all ears and beans, man.
               </p>
               {isConnected && balance && (
                 <p className="mt-2 text-primary">
-                  I see you're holdin' {balance} $GRIND tokens. Nice stash, friend. That's some serious coffee karma.
+                  I see you&apos;re holdin&apos; {balance} $GRIND tokens. Nice stash, friend. That&apos;s some serious
+                  coffee karma.
                 </p>
               )}
               <p className="mt-2">
