@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from "next/link"
 import Image from "next/image"
 import { ConnectWalletButton } from "@/components/connect-wallet-button"
+import { Shield, ExternalLink } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function Home() {
   return (
@@ -30,6 +32,18 @@ export default function Home() {
             />
           </div>
           <p className="text-center text-muted-foreground">Connect your wallet to enter the digital café experience</p>
+
+          {/* Wallet Safety Alert */}
+          <Alert className="bg-rainbow-green/10 border-rainbow-green/20 flex items-center gap-2 py-2">
+            <Shield className="h-4 w-4 text-rainbow-green flex-shrink-0" />
+            <AlertDescription className="text-sm">
+              <span className="font-medium text-rainbow-green">Wallet-Safe:</span> All transactions on testnet only. No
+              real assets accessed.
+              <Link href="/safety" className="ml-1 text-primary inline-flex items-center hover:underline">
+                Learn more <ExternalLink className="h-3 w-3 ml-0.5" />
+              </Link>
+            </AlertDescription>
+          </Alert>
         </CardContent>
         <CardFooter className="flex flex-col space-y-3 p-6">
           <ConnectWalletButton className="w-full mc-button-primary" />
