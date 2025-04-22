@@ -37,11 +37,7 @@ const farmers = [
 
 export default function TipPage() {
   const { toast } = useToast()
-  const { address, isConnected } = useAccount()
-  const { balance } = useTokenBalance(address)
-  const { rewardReferrer } = useReferral(address)
-
-  // Crypto tipping state
+  const [isReading, setIsReading] = useState(false)
   const [farmer, setFarmer] = useState("")
   const [amount, setAmount] = useState("")
   const [currency, setCurrency] = useState("GRIND")
@@ -52,6 +48,11 @@ export default function TipPage() {
   const [stripeFarmer, setStripeFarmer] = useState("")
   const [stripeAmount, setStripeAmount] = useState("")
   const [isStripeSubmitting, setIsStripeSubmitting] = useState(false)
+
+  // Get account from wagmi
+  const { address, isConnected } = useAccount()
+  const { balance } = useTokenBalance(address)
+  const { rewardReferrer } = useReferral(address)
 
   // Setup contract write for token transfers
   const { writeContractAsync, isPending } = useWriteContract()
@@ -186,7 +187,7 @@ export default function TipPage() {
       // Show redirect toast
       toast({
         title: "Redirecting to Stripe Checkout…",
-        description: `Processing $${stripeAmount} payment for ${stripeFarmer}`,
+        description: `Processing ${stripeAmount} payment for ${stripeFarmer}`,
         variant: "default",
       })
 

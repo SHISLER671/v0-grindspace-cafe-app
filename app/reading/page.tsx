@@ -14,7 +14,7 @@ import { useWriteContractSponsored } from "@abstract-foundation/agw-react"
 import { GRIND_TOKEN_ADDRESS, ERC20_ABI } from "@/lib/contracts"
 import { parseUnits } from "viem"
 
-import "./styles.css"
+import "./reading-styles.css"
 
 // Cost of a reading in $GRIND tokens
 const READING_COST = "4.20"
@@ -411,8 +411,6 @@ export default function ReadingPage() {
           </div>
         </div>
       </div>
-
-      {/* Styles moved to external CSS file */}
     </div>
   )
 }
