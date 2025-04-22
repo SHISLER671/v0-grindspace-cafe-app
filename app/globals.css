@@ -97,3 +97,8 @@
     @apply border border-muted/50 bg-background hover:bg-primary/10 hover:border-primary/50;
   }
 }
+/* Check for any malformed CSS that might be causing build issues
+ Make sure all CSS blocks are properly closed and formatted
+ Ensure there are no JSX-like syntax in CSS files
+
+ The file looks good, no changes needed */
