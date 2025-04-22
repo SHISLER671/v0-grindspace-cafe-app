@@ -16,6 +16,18 @@ import { parseUnits } from "viem"
 
 import "./reading-styles.css"
 
+// Safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(key, value)
+  },
+}
+
 // Cost of a reading in $GRIND tokens
 const READING_COST = "4.20"
 
@@ -46,16 +58,16 @@ export default function ReadingPage() {
     // Check if we're in a browser environment
     if (typeof window !== "undefined" && !isConnected) {
       // Check if there's a stored connection state
-      const storedConnection = localStorage.getItem("agw-connection")
+      const storedConnection = safeLocalStorage.getItem("agw-connection")
       if (storedConnection === "true") {
         setMockAddress("0x1234567890123456789012345678901234567890")
 
         // Get stored balance or set default
-        const storedBalance = localStorage.getItem("mock-grind-balance")
+        const storedBalance = safeLocalStorage.getItem("mock-grind-balance")
         if (storedBalance) {
           setMockBalance(storedBalance)
         } else {
-          localStorage.setItem("mock-grind-balance", mockBalance)
+          safeLocalStorage.setItem("mock-grind-balance", mockBalance)
         }
       }
     }
@@ -77,14 +89,16 @@ export default function ReadingPage() {
 
   // Mock connect wallet function
   const connectWallet = () => {
+    if (typeof window === "undefined") return
+
     setMockAddress("0x1234567890123456789012345678901234567890")
-    localStorage.setItem("agw-connection", "true")
+    safeLocalStorage.setItem("agw-connection", "true")
 
     // Set initial balance if not already set
-    if (!localStorage.getItem("mock-grind-balance")) {
-      localStorage.setItem("mock-grind-balance", "10.0")
+    if (!safeLocalStorage.getItem("mock-grind-balance")) {
+      safeLocalStorage.setItem("mock-grind-balance", "10.0")
     }
-    setMockBalance(localStorage.getItem("mock-grind-balance") || "10.0")
+    setMockBalance(safeLocalStorage.getItem("mock-grind-balance") || "10.0")
   }
 
   // Handle getting a reading
@@ -125,35 +139,34 @@ export default function ReadingPage() {
         console.log("Transaction submitted:", result)
 
         // Update local storage for UI consistency
-        const currentBalance = localStorage.getItem("mock-grind-balance") || "10.0"
-        const newBalance = (Number.parseFloat(currentBalance) - Number.parseFloat(READING_COST)).toFixed(2)
-        localStorage.setItem("mock-grind-balance", newBalance)
+        if (typeof window !== "undefined") {
+          const currentBalance = safeLocalStorage.getItem("mock-grind-balance") || "10.0"
+          const newBalance = (Number.parseFloat(currentBalance) - Number.parseFloat(READING_COST)).toFixed(2)
+          safeLocalStorage.setItem("mock-grind-balance", newBalance)
 
-        // Update total burned (for leaderboard)
-        const totalBurnedKey = "grindspace-total-burned"
-        const totalBurned = Number.parseFloat(localStorage.getItem(totalBurnedKey) || "0")
-        localStorage.setItem(totalBurnedKey, (totalBurned + Number.parseFloat(READING_COST)).toString())
+          // Update total burned (for leaderboard)
+          const totalBurnedKey = "grindspace-total-burned"
+          const totalBurned = Number.parseFloat(safeLocalStorage.getItem(totalBurnedKey) || "0")
+          safeLocalStorage.setItem(totalBurnedKey, (totalBurned + Number.parseFloat(READING_COST)).toString())
+        }
       } else {
         // SIMULATED TRANSACTION (for demo/preview)
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
         // Update mock balance in localStorage
-        const currentBalance = localStorage.getItem("mock-grind-balance") || "10.0"
-        const newBalance = (Number.parseFloat(currentBalance) - Number.parseFloat(READING_COST)).toFixed(2)
-        localStorage.setItem("mock-grind-balance", newBalance)
+        if (typeof window !== "undefined") {
+          const currentBalance = safeLocalStorage.getItem("mock-grind-balance") || "10.0"
+          const newBalance = (Number.parseFloat(currentBalance) - Number.parseFloat(READING_COST)).toFixed(2)
+          safeLocalStorage.setItem("mock-grind-balance", newBalance)
 
-        // Update mock balance state
-        setMockBalance(newBalance)
+          // Update mock balance state
+          setMockBalance(newBalance)
+        }
       }
 
       toast({
         title: "Reading Initiated! ✨",
-        description: (
-          <div className="flex items-center gap-2">
-            <CoffeeIcon className="h-4 w-4 text-primary" />
-            <span>You spent {READING_COST} $GRIND tokens for a mystical reading</span>
-          </div>
-        ),
+        description: `You spent ${READING_COST} $GRIND tokens for a mystical reading`,
         variant: "default",
       })
 

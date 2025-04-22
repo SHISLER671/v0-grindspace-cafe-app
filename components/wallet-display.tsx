@@ -17,6 +17,8 @@ export function WalletDisplay() {
 
   // Attempt to reconnect on component mount if we have a stored connection
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     const attemptReconnect = async () => {
       const hasStoredConnection = localStorage.getItem("agw-connection")
       if (hasStoredConnection && !isConnected && !isLoggingIn && login) {
@@ -41,6 +43,8 @@ export function WalletDisplay() {
 
   // Store connection state when connected
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     if (isConnected && address) {
       localStorage.setItem("agw-connection", "true")
     }
@@ -48,6 +52,8 @@ export function WalletDisplay() {
 
   // Handle logout - clear stored connection
   const handleLogout = () => {
+    if (typeof window === "undefined") return
+
     localStorage.removeItem("agw-connection")
     if (logout) logout()
   }

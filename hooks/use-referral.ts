@@ -4,6 +4,18 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 
+// Safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(key, value)
+  },
+}
+
 // Constants
 const REFERRAL_STORAGE_KEY = "grindspace-referrer"
 const REFERRAL_CLAIMED_KEY_PREFIX = "grindspace-referral-claimed-"
@@ -31,8 +43,10 @@ export function useReferral(userAddress?: string) {
 
   // Check for referral parameter and store it if present
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     const ref = searchParams?.get("ref")
-    const storedReferrer = localStorage.getItem(REFERRAL_STORAGE_KEY)
+    const storedReferrer = safeLocalStorage.getItem(REFERRAL_STORAGE_KEY)
 
     if (ref && userAddress) {
       // Prevent self-referrals
@@ -43,7 +57,7 @@ export function useReferral(userAddress?: string) {
 
       // Only store if we don't already have one (first referrer wins)
       if (!storedReferrer) {
-        localStorage.setItem(REFERRAL_STORAGE_KEY, ref)
+        safeLocalStorage.setItem(REFERRAL_STORAGE_KEY, ref)
         setReferrer(ref)
         console.log(`Referrer ${ref} stored`)
       }
@@ -54,14 +68,16 @@ export function useReferral(userAddress?: string) {
 
   // Check if the referral has been claimed
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     if (userAddress) {
       const claimedKey = `${REFERRAL_CLAIMED_KEY_PREFIX}${userAddress}`
-      const claimed = localStorage.getItem(claimedKey) === "true"
+      const claimed = safeLocalStorage.getItem(claimedKey) === "true"
       setHasRewarded(claimed)
 
       // Load referral earnings
       const earningsKey = `${REFERRAL_EARNINGS_KEY_PREFIX}${userAddress}`
-      const earnings = Number.parseInt(localStorage.getItem(earningsKey) || "0")
+      const earnings = Number.parseInt(safeLocalStorage.getItem(earningsKey) || "0")
       setReferralEarnings(earnings)
 
       // Calculate total referrals (assuming 10 $GRIND per referral)
@@ -93,6 +109,8 @@ export function useReferral(userAddress?: string) {
 
   // Process referral reward (simplified version using localStorage)
   const rewardReferrer = () => {
+    if (typeof window === "undefined") return false
+
     // Only proceed if we have a stored referrer and haven't claimed yet
     if (!referrer || !userAddress || hasRewarded) {
       return false
@@ -106,12 +124,12 @@ export function useReferral(userAddress?: string) {
     try {
       // Update referrer's earnings
       const earningsKey = `${REFERRAL_EARNINGS_KEY_PREFIX}${referrer}`
-      const currentEarnings = Number.parseInt(localStorage.getItem(earningsKey) || "0")
-      localStorage.setItem(earningsKey, (currentEarnings + REFERRAL_REWARD_AMOUNT).toString())
+      const currentEarnings = Number.parseInt(safeLocalStorage.getItem(earningsKey) || "0")
+      safeLocalStorage.setItem(earningsKey, (currentEarnings + REFERRAL_REWARD_AMOUNT).toString())
 
       // Mark referral as claimed
       const claimedKey = `${REFERRAL_CLAIMED_KEY_PREFIX}${userAddress}`
-      localStorage.setItem(claimedKey, "true")
+      safeLocalStorage.setItem(claimedKey, "true")
       setHasRewarded(true)
 
       // Show success toast
@@ -129,10 +147,11 @@ export function useReferral(userAddress?: string) {
 
   // Get referral earnings for any address
   const getReferralEarnings = (address?: string) => {
+    if (typeof window === "undefined") return 0
     if (!address) return 0
 
     const earningsKey = `${REFERRAL_EARNINGS_KEY_PREFIX}${address}`
-    return Number.parseInt(localStorage.getItem(earningsKey) || "0")
+    return Number.parseInt(safeLocalStorage.getItem(earningsKey) || "0")
   }
 
   return {

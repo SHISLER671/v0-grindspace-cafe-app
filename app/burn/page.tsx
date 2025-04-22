@@ -18,6 +18,18 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useReferral } from "@/hooks/use-referral"
 import { simulateBurnTokens } from "@/utils/token"
 
+// Safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(key, value)
+  },
+}
+
 // Mock leaderboard data
 const initialLeaderboard = [
   { address: "0xdead...beef", amount: "1000" },
@@ -51,15 +63,21 @@ export default function BurnPage() {
 
   // Load total burned amount from localStorage
   useEffect(() => {
-    const storedTotal = localStorage.getItem("grindspace-total-burned")
+    if (typeof window === "undefined") return
+
+    const storedTotal = safeLocalStorage.getItem("grindspace-total-burned")
     if (storedTotal) {
       setTotalBurned(storedTotal)
     }
 
     // Load leaderboard from localStorage
-    const storedLeaderboard = localStorage.getItem("grindspace-burn-leaderboard")
+    const storedLeaderboard = safeLocalStorage.getItem("grindspace-burn-leaderboard")
     if (storedLeaderboard) {
-      setLeaderboard(JSON.parse(storedLeaderboard))
+      try {
+        setLeaderboard(JSON.parse(storedLeaderboard))
+      } catch (e) {
+        console.error("Error parsing leaderboard:", e)
+      }
     }
 
     // Set random quote
@@ -115,10 +133,10 @@ export default function BurnPage() {
     })
       .then(async () => {
         // Process any pending referral reward
-        await processReferralReward()
+        await processReferralReward?.()
 
         // Update leaderboard
-        if (address) {
+        if (address && typeof window !== "undefined") {
           const formattedAddress = formatAddress(address)
           const existingEntry = leaderboard.find((entry) => entry.address === formattedAddress)
 
@@ -142,7 +160,7 @@ export default function BurnPage() {
           newLeaderboard = newLeaderboard.slice(0, 5)
 
           setLeaderboard(newLeaderboard)
-          localStorage.setItem("grindspace-burn-leaderboard", JSON.stringify(newLeaderboard))
+          safeLocalStorage.setItem("grindspace-burn-leaderboard", JSON.stringify(newLeaderboard))
         }
 
         // Set new random quote
@@ -155,7 +173,7 @@ export default function BurnPage() {
           setIsFireActive(false)
         }, 3000)
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error("Error burning tokens:", error)
         toast({
           title: "Error burning tokens",

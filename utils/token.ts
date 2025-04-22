@@ -1,5 +1,17 @@
 import type { useToast } from "@/hooks/use-toast"
 
+// Safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(key, value)
+  },
+}
+
 // Burn address
 export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD"
 
@@ -29,19 +41,19 @@ export async function burnTokens({
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Update mock balance in localStorage
-      const currentBalance = localStorage.getItem("mock-grind-balance") || "10.0"
+      const currentBalance = safeLocalStorage.getItem("mock-grind-balance") || "10.0"
       const newBalance = (Number.parseFloat(currentBalance) - Number.parseFloat(amount)).toFixed(2)
-      localStorage.setItem("mock-grind-balance", newBalance)
+      safeLocalStorage.setItem("mock-grind-balance", newBalance)
 
       // Update total burned (for leaderboard)
       const burnedKey = `grindspace-burned-${address}`
-      const currentBurned = Number.parseFloat(localStorage.getItem(burnedKey) || "0")
-      localStorage.setItem(burnedKey, (currentBurned + Number.parseFloat(amount)).toString())
+      const currentBurned = Number.parseFloat(safeLocalStorage.getItem(burnedKey) || "0")
+      safeLocalStorage.setItem(burnedKey, (currentBurned + Number.parseFloat(amount)).toString())
 
       // Update total burned (for leaderboard)
       const totalBurnedKey = "grindspace-total-burned"
-      const totalBurned = Number.parseFloat(localStorage.getItem(totalBurnedKey) || "0")
-      localStorage.setItem(totalBurnedKey, (totalBurned + Number.parseFloat(amount)).toString())
+      const totalBurned = Number.parseFloat(safeLocalStorage.getItem(totalBurnedKey) || "0")
+      safeLocalStorage.setItem(totalBurnedKey, (totalBurned + Number.parseFloat(amount)).toString())
     } else {
       // Use the provided burn function for real blockchain transactions
       if (!burnFunction) {

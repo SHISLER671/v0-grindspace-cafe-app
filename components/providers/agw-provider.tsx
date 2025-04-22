@@ -20,6 +20,36 @@ const abstractTestnet = {
   },
 }
 
+// Safe localStorage functions that check for browser environment
+const safeStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    try {
+      const value = localStorage.getItem(key)
+      return value === null ? null : JSON.parse(value)
+    } catch (error) {
+      console.error("Error retrieving from localStorage:", error)
+      return null
+    }
+  },
+  setItem: (key: string, value: unknown) => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.setItem(key, JSON.stringify(value))
+    } catch (error) {
+      console.error("Error storing in localStorage:", error)
+    }
+  },
+  removeItem: (key: string) => {
+    if (typeof window === "undefined") return
+    try {
+      localStorage.removeItem(key)
+    } catch (error) {
+      console.error("Error removing from localStorage:", error)
+    }
+  },
+}
+
 // Set up wagmi config with direct HTTP provider and persistent storage
 const config = createConfig({
   chains: [abstractTestnet],
@@ -28,38 +58,14 @@ const config = createConfig({
   },
   // Enable persistent storage for wallet connections
   // This ensures the connection persists across page refreshes
-  storage: {
-    getItem: (key) => {
-      try {
-        const value = localStorage.getItem(key)
-        return value === null ? null : JSON.parse(value)
-      } catch (error) {
-        console.error("Error retrieving from localStorage:", error)
-        return null
-      }
-    },
-    setItem: (key, value) => {
-      try {
-        localStorage.setItem(key, JSON.stringify(value))
-      } catch (error) {
-        console.error("Error storing in localStorage:", error)
-      }
-    },
-    removeItem: (key) => {
-      try {
-        localStorage.removeItem(key)
-      } catch (error) {
-        console.error("Error removing from localStorage:", error)
-      }
-    },
-  },
+  storage: safeStorage,
 })
 
 export function AGWProvider({ children }: { children: ReactNode }) {
   // Attempt to reconnect on page load if previously connected
   useEffect(() => {
     // Check if there's a stored connection
-    const storedConnection = localStorage.getItem("agw-connection")
+    const storedConnection = typeof window !== "undefined" ? localStorage.getItem("agw-connection") : null
     if (storedConnection) {
       // The Abstract wallet will automatically attempt to reconnect
       console.log("Attempting to reconnect to previously connected wallet")

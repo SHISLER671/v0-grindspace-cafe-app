@@ -13,12 +13,26 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAccount } from "wagmi"
 import { ReferralShareCard } from "@/components/referral-share-card"
 
+// Safely access localStorage
+const safeLocalStorage = {
+  getItem: (key: string) => {
+    if (typeof window === "undefined") return null
+    return localStorage.getItem(key)
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window === "undefined") return
+    localStorage.setItem(key, value)
+  },
+}
+
 export default function Home() {
   const searchParams = useSearchParams()
   const { isConnected } = useAccount()
 
   // Store referral parameter if present
   useEffect(() => {
+    if (typeof window === "undefined") return
+
     const ref = searchParams?.get("ref")
     if (ref) {
       // We'll store this temporarily - the actual validation and storage
@@ -26,8 +40,8 @@ export default function Home() {
       sessionStorage.setItem("temp-referrer", ref)
 
       // Also store in localStorage for the useReferral hook to pick up
-      if (!localStorage.getItem("grindspace-referrer")) {
-        localStorage.setItem("grindspace-referrer", ref)
+      if (!safeLocalStorage.getItem("grindspace-referrer")) {
+        safeLocalStorage.setItem("grindspace-referrer", ref)
       }
     }
   }, [searchParams])

@@ -19,7 +19,9 @@ export function ConnectWalletButton({ className }: ConnectWalletButtonProps) {
       try {
         await login()
         // Store connection state in localStorage
-        localStorage.setItem("agw-connection", "true")
+        if (typeof window !== "undefined") {
+          localStorage.setItem("agw-connection", "true")
+        }
       } catch (error) {
         console.error("Failed to connect wallet:", error)
       }
