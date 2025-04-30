@@ -71,6 +71,9 @@
     "ai": "latest",
     "@ai-sdk/openai": "latest"
   },
+  "resolutions": {
+    "secp256k1": "^3.8.1"
+  },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19",
